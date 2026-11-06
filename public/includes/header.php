@@ -34,7 +34,7 @@ if ($layout === 'app') {
             ['Help & support', null, 'help'],
         ],
         'admin' => [
-            ['Overview', 'home.php', 'home'], ['User management', null, 'users'],
+            ['Overview', 'home.php', 'home'], ['User management', 'admin/users.php', 'users'],
             ['Course management', null, 'book'], ['Enrollment management', null, 'file'],
             ['Timetable management', null, 'calendar'], ['Change approvals', null, 'check'],
             ['Notification logs', null, 'bell'], ['Audit history', null, 'shield'],
@@ -85,7 +85,7 @@ if ($layout === 'app') {
   <aside class="sidebar" id="sidebar" aria-label="Sidebar">
     <a class="brand" href="<?= BASE_URL ?>/home.php"><?= logoMark() ?><span>NoticeDiff</span></a>
     <ul class="side-nav">
-      <?php foreach ($sidebar as [$label, $href, $ic]): $active = ($href && $current === $href); ?>
+      <?php foreach ($sidebar as [$label, $href, $ic]): $active = ($href && substr($_SERVER['SCRIPT_NAME'], -strlen($href)) === $href); ?>
         <li>
           <?php if ($href): ?>
             <a class="side-link<?= $active ? ' active' : '' ?>" title="<?= e($label) ?>" href="<?= BASE_URL . '/' . $href ?>"<?= $active ? ' aria-current="page"' : '' ?>>
