@@ -1,0 +1,7 @@
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Git backup
+.git-backup/
