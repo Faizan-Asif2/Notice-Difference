@@ -7,7 +7,7 @@ date_default_timezone_set('UTC');
 define('APP_TIMEZONE', 'Asia/Karachi');
 
 $secretsPath = '/home/faizan-asif/noticediff-secrets/db.env';
- if (!file_exists($secretsPath)) {
+ if (!is_readable($secretsPath)) {
     $secretsPath = dirname(__DIR__) . '/.env';
  }
 define('SECRETS_FILE', $secretsPath);
