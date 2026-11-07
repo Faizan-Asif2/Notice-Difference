@@ -34,12 +34,15 @@ Public signup always creates a student. Instructor and administrator roles are a
 - Student weekly timetable showing original and approved schedules side by side
 - Change history page with a request, approval and notification timeline
 - Permanent audit table that the database refuses to edit or delete
+- Admin audit report (late requests, decisions, notification counts) and a permanent history log
+- Admin can create accounts with any role, change roles and disable or enable accounts
+- Student commute preferences with schedule-impact warnings (a comparison of times the student enters, not a bus system)
 
 ## Not implemented yet
 
-Commute preferences and schedule-impact warnings, email notifications, creating instructors and administrators
-from the interface, password reset, reports and analytics, notification-log and audit pages for administrators,
-the "additional lecture" change type in the request form.
+Email notifications, password reset, instructor notifications when a request is decided, a lecture details page,
+a settings page, reports and analytics charts, conflict detection between lectures, calendar export, and the
+"additional lecture" change type in the request form. Disabling an account takes effect at the user's next login.
 
 ## Running locally
 
