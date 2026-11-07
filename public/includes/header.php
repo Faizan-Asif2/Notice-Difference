@@ -28,7 +28,7 @@ if ($layout === 'app') {
         ],
         'instructor' => [
             ['Overview', 'home.php', 'home'], ['My courses', null, 'book'],
-            ['My lectures', null, 'calendar'], ['Submit change request', null, 'send'],
+            ['My lectures', null, 'calendar'], ['Submit change request', 'instructor/request.php', 'send'],
             ['Pending requests', null, 'clock'], ['Request history', null, 'history'],
             ['Notifications', null, 'bell'], ['Profile & settings', null, 'settings'],
             ['Help & support', null, 'help'],
@@ -36,7 +36,7 @@ if ($layout === 'app') {
         'admin' => [
             ['Overview', 'home.php', 'home'], ['User management', 'admin/users.php', 'users'],
             ['Course management', 'admin/setup.php', 'book'], ['Enrollment management', null, 'file'],
-            ['Timetable management', null, 'calendar'], ['Change approvals', 'admin/approvals.php', 'check'],
+            ['Timetable management', 'admin/lectures.php', 'calendar'], ['Change approvals', 'admin/approvals.php', 'check'],
             ['Notification logs', null, 'bell'], ['Audit history', null, 'shield'],
             ['Reports & analytics', null, 'chart'], ['System settings', null, 'settings'],
         ],
