@@ -107,7 +107,7 @@ require __DIR__ . '/includes/header.php';
     <div class="card stat"><span class="stat-icon warn"><?= icon('clock') ?></span>
       <div><div class="stat-num"><?= $lateCount ?></div><div class="stat-label">Late notices</div></div></div>
   </div>
-
+  <?php require __DIR__ . '/includes/commute_warning.php'; ?>
   <div class="cols">
     <section class="card" aria-labelledby="h-notices">
       <h2 id="h-notices">Important announcements</h2>

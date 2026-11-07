@@ -23,7 +23,7 @@ if ($layout === 'app') {
             ['Overview', 'home.php', 'home'], ['My timetable', 'student/timetable.php', 'calendar'],
             ['Upcoming lectures', null, 'clock'], ['Schedule changes', null, 'swap'],
             ['Notifications', 'student/notifications.php', 'bell'], ['Change history', 'student/history.php', 'history'],
-            ['Commute preferences', null, 'bus'], ['Settings', null, 'settings'],
+            ['Commute preferences', 'student/commute.php', 'bus'], ['Settings', null, 'settings'],
             ['Help & support', null, 'help'],
         ],
         'instructor' => [
@@ -111,10 +111,17 @@ if ($layout === 'app') {
     <header class="app-topbar">
       <button type="button" class="icon-btn" id="side-toggle" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="sidebar"><?= icon('menu') ?></button>
       <span class="grow"></span>
-      <span class="bell" role="img" aria-label="<?= $unreadCount ?> unread notifications">
-        <?= icon('bell') ?>
-        <?php if ($unreadCount > 0): ?><span class="badge-count"><?= min($unreadCount, 99) ?></span><?php endif; ?>
-      </span>
+            <?php if ($_SESSION['role'] === 'student'): ?>
+        <a class="bell" href="<?= BASE_URL ?>/student/notifications.php" aria-label="Notifications, <?= $unreadCount ?> unread">
+          <?= icon('bell') ?>
+          <?php if ($unreadCount > 0): ?><span class="badge-count"><?= min($unreadCount, 99) ?></span><?php endif; ?>
+        </a>
+      <?php else: ?>
+        <span class="bell" role="img" aria-label="<?= $unreadCount ?> unread notifications">
+          <?= icon('bell') ?>
+          <?php if ($unreadCount > 0): ?><span class="badge-count"><?= min($unreadCount, 99) ?></span><?php endif; ?>
+        </span>
+      <?php endif; ?>
       <details class="menu">
         <summary>
           <span class="avatar"><?= e(mb_strtoupper(mb_substr($_SESSION['full_name'], 0, 1))) ?></span>

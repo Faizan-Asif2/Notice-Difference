@@ -892,3 +892,11 @@ a.btn { text-decoration: none; }
 .day.today { border-color: var(--green); }
 .quick { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
 .toolbar h2 { margin: 0; }
+
+
+.impact { border-left: 4px solid var(--amber); margin-bottom: 20px; }
+.impact h2 { margin-bottom: 6px; }
+.impact ul { margin: 14px 0 0; padding-left: 18px; display: grid; gap: 12px; }
+.conflict { color: #92400E; font-weight: 600; font-size: .92rem; margin-top: 4px; }
+a.bell { text-decoration: none; border-radius: 10px; }
+a.bell:hover { background: var(--bg); }
