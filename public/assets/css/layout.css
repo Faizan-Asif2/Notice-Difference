@@ -861,3 +861,10 @@ select:focus, input[type=date]:focus, input[type=time]:focus, textarea:focus { o
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .btn-sm { padding: 10px 18px; font-size: .95rem; margin-top: 18px; }
 .mt { margin-top: 20px; }
+
+
+.btn-danger { background: var(--red); }
+.btn-danger:hover { background: #B83030; }
+.review { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+.review textarea { min-height: 64px; }
+@media (max-width: 700px) { .review { grid-template-columns: 1fr; } }
