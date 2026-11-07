@@ -192,18 +192,6 @@ require __DIR__ . '/includes/header.php';
     </div>
   </div>
 
-<?php else: ?>
-  <?php
-    $panels = $role === 'instructor'
-      ? [['Your lectures', 'No lectures assigned yet. They appear here once the timetable is published.'],
-         ['Change requests', 'You have not submitted any requests. Send changes at least 24 hours before the lecture.']]
-      : [['Pending approvals', 'Nothing is waiting for review.'],
-         ['Timetable setup', 'Add courses, instructors and students, then publish the semester timetable.']];
-  ?>
-  <div class="cols" style="margin-top:28px">
-    <?php foreach ($panels as $p): ?>
-      <section class="card"><h2><?= e($p[0]) ?></h2><div class="empty"><?= e($p[1]) ?></div></section>
-    <?php endforeach; ?>
-  </div>
+<?php else: require __DIR__ . '/includes/dashboard_staff.php'; ?>
 <?php endif; ?>
 <?php require __DIR__ . '/includes/footer.php'; ?>

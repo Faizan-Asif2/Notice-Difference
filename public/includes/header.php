@@ -20,7 +20,7 @@ if ($layout === 'app') {
     // [label, page file (null = not built yet), icon]
     $menus = [
         'student' => [
-            ['Overview', 'home.php', 'home'], ['My timetable', null, 'calendar'],
+            ['Overview', 'home.php', 'home'], ['My timetable', 'student/timetable.php', 'calendar'],
             ['Upcoming lectures', null, 'clock'], ['Schedule changes', null, 'swap'],
             ['Notifications', 'student/notifications.php', 'bell'], ['Change history', 'student/history.php', 'history'],
             ['Commute preferences', null, 'bus'], ['Settings', null, 'settings'],
