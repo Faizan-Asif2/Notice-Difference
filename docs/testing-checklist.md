@@ -64,3 +64,14 @@ Record Pass or Fail and the date for each row.
 | 31 | Register with the name `<script>alert(1)</script>` | Shown as plain text, no popup | |
 | 32 | Submit a form without the CSRF token | Rejected (HTTP 400) | |
 | 33 | Open `/config/database.php` in the browser | Not reachable | |
+## Commute preferences (student)
+| # | Test | Expected | Result |
+|---|------|----------|--------|
+| C1 | Choose "Personal or family transport", Save | Green "Commute preferences saved."; reload keeps the choice | |
+| C2 | Switch the dropdown between options | Bus time fields show only for "University bus" | |
+| C3 | University bus, morning 07:30, return 15:00, Save | Saved; reload shows both times | |
+| C4 | University bus, morning 15:00, return 07:30, Save | Error "return bus must leave after the morning bus"; old values stay in the database | |
+| C5 | With bus times saved, choose "Public transport", Save, then switch back to University bus | Time fields are empty (server cleared them) | |
+| C6 | Set return bus earlier than the changed lecture's end, open the dashboard | "Schedule impact" shows "Possible conflict ... after your return bus" | |
+| C7 | Set return bus later than the lecture's end, open the dashboard | Change is listed, no conflict line | |
+| C8 | Log in as admin in a different browser, open /student/commute.php | 403, not the page | |
