@@ -22,7 +22,7 @@ if ($layout === 'app') {
         'student' => [
             ['Overview', 'home.php', 'home'], ['My timetable', null, 'calendar'],
             ['Upcoming lectures', null, 'clock'], ['Schedule changes', null, 'swap'],
-            ['Notifications', null, 'bell'], ['Change history', null, 'history'],
+            ['Notifications', 'student/notifications.php', 'bell'], ['Change history', 'student/history.php', 'history'],
             ['Commute preferences', null, 'bus'], ['Settings', null, 'settings'],
             ['Help & support', null, 'help'],
         ],
