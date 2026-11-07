@@ -900,3 +900,9 @@ a.btn { text-decoration: none; }
 .conflict { color: #92400E; font-weight: 600; font-size: .92rem; margin-top: 4px; }
 a.bell { text-decoration: none; border-radius: 10px; }
 a.bell:hover { background: var(--bg); }
+
+
+.inline-form { display: flex; gap: 8px; align-items: center; margin: 4px 0 0; }
+.inline-form select { width: auto; height: 38px; }
+.btn-xs { padding: 7px 12px; font-size: .85rem; margin: 0; }
+td .meta { margin-top: 2px; font-size: .8rem; }
