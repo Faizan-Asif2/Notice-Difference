@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Lock this request so two admins cannot decide it at the same time.
             $st = $db->prepare(
-                'SELECT cr.id, cr.lecture_id, cr.change_type, cr.proposed_date, cr.proposed_start, cr.proposed_end,
+                'SELECT cr.id, cr.lecture_id, cr.requested_by, cr.change_type, cr.proposed_date, cr.proposed_start, cr.proposed_end,
                         cr.proposed_room, cr.proposed_mode, cr.reason, cr.submitted_at, cr.is_late, cr.status,
                         l.course_id, l.section_id, l.original_date, l.original_start, l.original_end,
                         l.original_room, l.original_mode, l.original_start_at,
@@ -76,8 +76,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         "INSERT INTO change_history (lecture_id, change_request_id, action, performed_by, details)
                          VALUES (?, ?, 'rejected', ?, ?)"
                     )->execute([$r['lecture_id'], $reqId, $adminId, $label . ' rejected. Reason: ' . $note]);
+                    $db->prepare('INSERT INTO notifications (user_id, change_request_id, message) VALUES (?, ?, ?)')
+                       ->execute([(int)$r['requested_by'], $reqId,
+                           'Your ' . strtolower($label) . ' request for ' . $r['code'] . ' on ' . fmtDate($r['original_date'])
+                           . ' was rejected. Reason: ' . $note]);
                     $db->commit();
-                    setFlash('Request rejected. Students were not notified.');
+                    setFlash('Request rejected. The instructor was notified. Students were not.');
                 } else {
                     $db->prepare(
                         "UPDATE change_requests SET status = 'approved', reviewed_by = ?, reviewed_at = ?, review_note = ? WHERE id = ?"
@@ -128,8 +132,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $hist->execute([$r['lecture_id'], $reqId, 'notified', $adminId,
                         count($students) . ' student(s) notified in the app']);
 
+                    $db->prepare('INSERT INTO notifications (user_id, change_request_id, message) VALUES (?, ?, ?)')
+                       ->execute([(int)$r['requested_by'], $reqId,
+                           'Your ' . strtolower($label) . ' request for ' . $r['code'] . ' on ' . fmtDate($r['original_date'])
+                           . ' was approved. ' . count($students) . ' student(s) were notified.'
+                           . ($note !== '' ? ' Note: ' . $note : '')]);
                     $db->commit();
-                    setFlash('Request approved. ' . count($students) . ' student(s) notified.');
+                    setFlash('Request approved. ' . count($students) . ' student(s) and the instructor notified.');
                 }
                 header('Location: ' . $_SERVER['SCRIPT_NAME']);
                 exit;

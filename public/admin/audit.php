@@ -40,8 +40,10 @@ $rows = $db->query(
             cr.review_note, cr.late_justification,
             c.code, l.original_date, l.original_start, l.original_start_at,
             req.full_name AS requester, rv.full_name AS reviewer,
-            (SELECT COUNT(*) FROM notifications n WHERE n.change_request_id = cr.id) AS notified,
-            (SELECT MIN(n.created_at) FROM notifications n WHERE n.change_request_id = cr.id) AS first_notified
+            (SELECT COUNT(*) FROM notifications n JOIN users nu ON nu.id = n.user_id
+              WHERE n.change_request_id = cr.id AND nu.role = 'student') AS notified,
+            (SELECT MIN(n.created_at) FROM notifications n JOIN users nu ON nu.id = n.user_id
+              WHERE n.change_request_id = cr.id AND nu.role = 'student') AS first_notified
      FROM change_requests cr
      JOIN lectures l ON l.id = cr.lecture_id
      JOIN courses c ON c.id = l.course_id

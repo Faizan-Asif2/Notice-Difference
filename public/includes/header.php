@@ -28,9 +28,9 @@ if ($layout === 'app') {
         ],
         'instructor' => [
             ['Overview', 'home.php', 'home'], ['My courses', null, 'book'],
-            ['My lectures', null, 'calendar'], ['Submit change request', 'instructor/request.php', 'send'],
-            ['Pending requests', null, 'clock'], ['Request history', null, 'history'],
-            ['Notifications', null, 'bell'], ['Profile & settings', null, 'settings'],
+            ['My lectures', 'instructor/lectures.php', 'calendar'], ['Submit change request', 'instructor/request.php', 'send'],
+            ['Pending requests', 'instructor/requests.php?f=pending', 'clock'], ['Request history', 'instructor/requests.php', 'history'],
+            ['Notifications', 'instructor/notifications.php', 'bell'], ['Profile & settings', null, 'settings'],
             ['Help & support', null, 'help'],
         ],
         'admin' => [
@@ -111,8 +111,8 @@ if ($layout === 'app') {
     <header class="app-topbar">
       <button type="button" class="icon-btn" id="side-toggle" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="sidebar"><?= icon('menu') ?></button>
       <span class="grow"></span>
-            <?php if ($_SESSION['role'] === 'student'): ?>
-        <a class="bell" href="<?= BASE_URL ?>/student/notifications.php" aria-label="Notifications, <?= $unreadCount ?> unread">
+            <?php if (in_array($_SESSION['role'], ['student', 'instructor'], true)): ?>
+        <a class="bell" href="<?= BASE_URL ?>/<?= $_SESSION['role'] ?>/notifications.php" aria-label="Notifications, <?= $unreadCount ?> unread">
           <?= icon('bell') ?>
           <?php if ($unreadCount > 0): ?><span class="badge-count"><?= min($unreadCount, 99) ?></span><?php endif; ?>
         </a>
