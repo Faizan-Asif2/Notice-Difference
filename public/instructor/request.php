@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // The lecture must belong to THIS instructor and still be scheduled.
     $st = $db->prepare(
-        "SELECT id, original_room, original_mode, original_start_at
+        "SELECT id, original_date, original_room, original_mode, original_start_at
          FROM lectures WHERE id = ? AND instructor_id = ? AND status = 'scheduled'"
     );
     $st->execute([$lectureId, $uid]);
@@ -96,6 +96,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $prop['mode'] = $pMode;
             }
+        }
+    }
+
+    // Students come first (additional rule beyond the client document): for a reschedule or
+    // time change, notice is measured against the EARLIER of the original start and the new start.
+    if ($lec && !$errors && $prop['start'] !== null) {
+        $newStartAt = new DateTime(localToUtc($prop['date'] ?: $lec['original_date'], $prop['start']), $utc);
+        if ($newStartAt <= $now) {
+            $errors[] = 'The new start time must be in the future.';
+        } else {
+            $earliest = ($newStartAt < $startAt) ? $newStartAt : $startAt;
+            $deadline = (clone $earliest)->modify('-24 hours');
+            $isLate   = $now > $deadline;
         }
     }
 
@@ -199,13 +212,13 @@ require __DIR__ . '/../includes/header.php';
         $label = $l['code'] . ' ' . $l['name'] . ', ' . fmtDate($l['original_date']) . ' ' . fmtTime($l['original_start'])
                . ' (section ' . $l['section'] . ') - ' . ($late ? 'LATE, deadline passed' : 'deadline ' . $dlText);
       ?>
-        <option value="<?= (int)$l['id'] ?>" data-late="<?= $late ? '1' : '0' ?>"<?= (int)($old['lecture_id'] ?? 0) === (int)$l['id'] ? ' selected' : '' ?>><?= e($label) ?></option>
+        <option value="<?= (int)$l['id'] ?>" data-date="<?= e($l['original_date']) ?>" data-late="<?= $late ? '1' : '0' ?>"<?= (int)($old['lecture_id'] ?? 0) === (int)$l['id'] ? ' selected' : '' ?>><?= e($label) ?></option>
       <?php endforeach; ?>
     </select>
 
     <div id="late-box" class="error mt" style="display:none">
-      The 24-hour deadline for this lecture has passed. You can still submit an emergency request, but it will be flagged
-      as late and you must explain the emergency below.
+      The 24-hour notice window has passed for the original lecture or for the new time you chose. You can still submit an
+      emergency request, but it will be flagged as late and you must explain the emergency below.
     </div>
 
     <label for="change_type">Type of change</label>
@@ -284,11 +297,24 @@ require __DIR__ . '/../includes/header.php';
     });
     var opt = lecture.options[lecture.selectedIndex];
     var late = opt && opt.getAttribute('data-late') === '1';
+    // A new start under 24 hours away also counts as late. This is only a convenience:
+    // the server calculates the real value and enforces the explanation.
+    if (!late && opt && (type.value === 'reschedule' || type.value === 'time_change')) {
+      var d = type.value === 'reschedule' ? document.getElementById('proposed_date').value : opt.getAttribute('data-date');
+      var t = document.getElementById('proposed_start').value;
+      if (d && t) {
+        var nt = new Date(d + 'T' + t);
+        if (!isNaN(nt) && nt.getTime() - Date.now() < 24 * 3600 * 1000) late = true;
+      }
+    }
     document.getElementById('late-box').style.display = late ? '' : 'none';
     document.getElementById('late-field').style.display = late ? '' : 'none';
   }
   type.addEventListener('change', sync);
   lecture.addEventListener('change', sync);
+  ['proposed_date', 'proposed_start'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', sync);
+  });
   sync();
 })();
 </script>

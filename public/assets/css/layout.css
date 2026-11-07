@@ -863,7 +863,7 @@ select:focus, input[type=date]:focus, input[type=time]:focus, textarea:focus { o
 .mt { margin-top: 20px; }
 
 
-.btn-danger { background: var(--red); }
+	.btn-danger { background: #DC4545; color: #fff; }
 .btn-danger:hover { background: #B83030; }
 .review { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
 .review textarea { min-height: 64px; }
