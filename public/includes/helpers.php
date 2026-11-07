@@ -70,3 +70,31 @@ function logoMark() {
          . '<path d="M11 18h9M18 16l2 2-2 2M21 22h-9M14 20l-2 2 2 2" stroke-width="1.5"/>'
          . '</g></svg>';
 }
+
+
+function isValidDate($d) {
+    $x = DateTime::createFromFormat('Y-m-d', (string)$d);
+    return $x && $x->format('Y-m-d') === $d;
+}
+
+function isValidTime($t) {
+    return (bool)preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', (string)$t);
+}
+
+function setFlash($msg) {
+    $_SESSION['flash_ok'] = $msg;
+}
+
+function takeFlash() {
+    $m = $_SESSION['flash_ok'] ?? '';
+    unset($_SESSION['flash_ok']);
+    return $m;
+}
+
+// Pakistan-time date + time -> UTC datetime string for the database.
+function localToUtc($date, $time) {
+    $d = new DateTime($date . ' ' . $time, new DateTimeZone(APP_TIMEZONE));
+    $d->setTimezone(new DateTimeZone('UTC'));
+    return $d->format('Y-m-d H:i:s');
+}
+?>

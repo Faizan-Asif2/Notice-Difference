@@ -850,3 +850,14 @@ section[id] {
 .table th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .table td { padding: 12px; border-bottom: 1px solid var(--line); }
 .table tr:last-child td { border-bottom: 0; }
+
+
+select, input[type=date], input[type=time], textarea { width: 100%; padding: 0 14px; border: 1px solid #CBD1DB; border-radius: 10px; background: #fff; font: 1rem var(--font); color: var(--ink); }
+select, input[type=date], input[type=time] { height: 46px; }
+textarea { padding: 12px 14px; min-height: 96px; resize: vertical; }
+select:focus, input[type=date]:focus, input[type=time]:focus, textarea:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 4px rgba(23, 107, 82, .15); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-top: 28px; }
+.form-card h2 { margin-bottom: 4px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn-sm { padding: 10px 18px; font-size: .95rem; margin-top: 18px; }
+.mt { margin-top: 20px; }
