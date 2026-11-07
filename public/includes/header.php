@@ -18,29 +18,34 @@ $current = basename($_SERVER['SCRIPT_NAME']);
 
 if ($layout === 'app') {
     // [label, page file (null = not built yet), icon]
-    $menus = [
+    
+        $menus = [
         'student' => [
-            ['Overview', 'home.php', 'home'], ['My timetable', 'student/timetable.php', 'calendar'],
-            ['Upcoming lectures', null, 'clock'], ['Schedule changes', null, 'swap'],
-            ['Notifications', 'student/notifications.php', 'bell'], ['Change history', 'student/history.php', 'history'],
-            ['Commute preferences', 'student/commute.php', 'bus'], ['Settings', null, 'settings'],
-            ['Help & support', null, 'help'],
+            ['Overview', 'home.php', 'home'],
+            ['My timetable', 'student/timetable.php', 'calendar'],
+            ['Notifications', 'student/notifications.php', 'bell'],
+            ['Change history', 'student/history.php', 'history'],
+            ['Commute preferences', 'student/commute.php', 'bus'],
         ],
         'instructor' => [
-            ['Overview', 'home.php', 'home'], ['My courses', null, 'book'],
-            ['My lectures', 'instructor/lectures.php', 'calendar'], ['Submit change request', 'instructor/request.php', 'send'],
-            ['Pending requests', 'instructor/requests.php?f=pending', 'clock'], ['Request history', 'instructor/requests.php', 'history'],
-            ['Notifications', 'instructor/notifications.php', 'bell'], ['Profile & settings', null, 'settings'],
-            ['Help & support', null, 'help'],
+            ['Overview', 'home.php', 'home'],
+            ['My courses', 'instructor/courses.php', 'book'],
+            ['My lectures', 'instructor/lectures.php', 'calendar'],
+            ['Submit change request', 'instructor/request.php', 'send'],
+            ['Pending requests', 'instructor/requests.php?f=pending', 'clock'],
+            ['Request history', 'instructor/requests.php', 'history'],
+            ['Notifications', 'instructor/notifications.php', 'bell'],
         ],
         'admin' => [
-            ['Overview', 'home.php', 'home'], ['User management', 'admin/users.php', 'users'],
-            ['Course management', 'admin/setup.php', 'book'], ['Enrollment management', 'admin/setup.php', 'file'],
-            ['Timetable management', 'admin/lectures.php', 'calendar'], ['Change approvals', 'admin/approvals.php', 'check'],
-            ['Notification logs', null, 'bell'], ['Audit history', 'admin/audit.php', 'shield'],
-            ['Reports & analytics', null, 'chart'], ['System settings', null, 'settings'],
+            ['Overview', 'home.php', 'home'],
+            ['User management', 'admin/users.php', 'users'],
+            ['Courses & enrollments', 'admin/setup.php', 'book'],
+            ['Timetable management', 'admin/lectures.php', 'calendar'],
+            ['Change approvals', 'admin/approvals.php', 'check'],
+            ['Audit history', 'admin/audit.php', 'shield'],
         ],
     ];
+    
     $sidebar = $menus[$_SESSION['role']] ?? [];
     $s = getDB()->prepare('SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0');
     $s->execute([(int)$_SESSION['user_id']]);
