@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-    } elseif ($action === 'role' || $action === 'active') {
+    } elseif ($action === 'role' || $action === 'active' || $action === 'reset') {
         $targetId = (int)($_POST['user_id'] ?? 0);
         $st = $db->prepare('SELECT id, role FROM users WHERE id = ?');
         $st->execute([$targetId]);
@@ -53,6 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'User not found.';
         } elseif ($targetId === $adminId) {
             $errors[] = 'You cannot change your own role or status.';
+        } elseif ($action === 'reset') {
+            $tmp = $_POST['temp_password'] ?? '';
+            if (strlen($tmp) < 8) {
+                $errors[] = 'The temporary password must be at least 8 characters.';
+            } else {
+                $db->prepare('UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?')
+                   ->execute([password_hash($tmp, PASSWORD_DEFAULT), $targetId]);
+                setFlash('Temporary password set. Give it to the user. They must choose a new password at their next login.');
+                header('Location: ' . $_SERVER['SCRIPT_NAME']);
+                exit;
+            }
         } elseif ($action === 'role') {
             $role = $_POST['role'] ?? '';
             if (!in_array($role, $roles, true)) {
@@ -132,7 +143,7 @@ require __DIR__ . '/../includes/header.php';
   <?php else: ?>
     <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Password</th></tr></thead>
         <tbody>
           <?php foreach ($users as $u): $self = (int)$u['id'] === $adminId; ?>
             <tr>
@@ -167,6 +178,19 @@ require __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
               </td>
               <td><?= e(toLocalTime($u['created_at'], 'j M Y')) ?></td>
+              <td>
+                <?php if (!$self): ?>
+                  <form method="post" class="inline-form" data-confirm="Set a temporary password for this user? They must change it at their next login.">
+                    <input type="hidden" name="csrf" value="<?= e(csrfToken()) ?>">
+                    <input type="hidden" name="action" value="reset">
+                    <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                    <input type="text" name="temp_password" style="width:150px" placeholder="Temporary password" autocomplete="off" minlength="8" required aria-label="Temporary password for <?= e($u['full_name']) ?>">
+                    <button type="submit" class="btn btn-outline btn-xs">Reset</button>
+                  </form>
+                <?php else: ?>
+                  <span class="meta">Use Change password</span>
+                <?php endif; ?>
+              </td>
             </tr>
           <?php endforeach; ?>
         </tbody>

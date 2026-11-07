@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   role          ENUM('student','instructor','admin') NOT NULL DEFAULT 'student',
   is_active     TINYINT(1) NOT NULL DEFAULT 1,
+  must_change_password TINYINT(1) NOT NULL DEFAULT 0,
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 

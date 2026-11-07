@@ -137,6 +137,7 @@ if ($layout === 'app') {
         <div class="menu-pop">
           <p class="menu-name"><?= e($_SESSION['full_name']) ?></p>
           <p class="menu-role"><?= e(ucfirst($_SESSION['role'])) ?></p>
+          <a class="btn btn-outline btn-block" style="margin-bottom:8px" href="<?= BASE_URL ?>/auth/change_password.php">Change password</a>
           <form method="post" action="<?= BASE_URL ?>/auth/logout.php">
             <input type="hidden" name="csrf" value="<?= e(csrfToken()) ?>">
             <button type="submit" class="btn btn-outline btn-block">Log out</button>

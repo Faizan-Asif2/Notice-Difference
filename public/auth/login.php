@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         $stmt = getDB()->prepare(
-            'SELECT id, full_name, password_hash, role, is_active FROM users WHERE email = ?'
+            'SELECT id, full_name, password_hash, role, is_active, must_change_password FROM users WHERE email = ?'
         );
         $stmt->execute([$email]);
         $user = $stmt->fetch();
@@ -27,7 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             session_regenerate_id(true);
             $_SESSION['user_id']   = (int)$user['id'];
             $_SESSION['full_name'] = $user['full_name'];
-            $_SESSION['role']      = $user['role'];
+            $_SESSION['role']      = $user['role']; 
+            $_SESSION['must_change'] = (int)$user['must_change_password'];
             header('Location: ' . BASE_URL . '/home.php');
             exit;
         }

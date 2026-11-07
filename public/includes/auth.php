@@ -46,6 +46,12 @@ function requireLogin() {
         header('Location: ' . BASE_URL . '/auth/login.php');
         exit;
     }
+    // A user with a temporary password must choose a new one before using anything else.
+    $script = basename($_SERVER['SCRIPT_NAME']);
+    if (!empty($_SESSION['must_change']) && $script !== 'change_password.php' && $script !== 'logout.php') {
+        header('Location: ' . BASE_URL . '/auth/change_password.php');
+        exit;
+    }
 }
 
 // Enforced on the server: call at the top of every protected page.
