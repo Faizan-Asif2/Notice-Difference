@@ -80,7 +80,7 @@ foreach ($rows as $r) {
     $newMode  = $r['proposed_mode']  ?: $r['original_mode'];
     $now = slotText($newDate, $newStart, $newEnd, $newRoom, $newMode);
 
-    if ($type === 'reschedule') {
+        if ($type === 'reschedule' && $newDate !== $r['original_date']) {
         $entries[] = array_merge($base, ['date' => $r['original_date'], 'sort' => $r['original_start'],
                                          'now' => 'Moved to ' . $now, 'badge' => $badge]);
         $entries[] = array_merge($base, ['date' => $newDate, 'sort' => $newStart,

@@ -35,7 +35,7 @@ if ($layout === 'app') {
         ],
         'admin' => [
             ['Overview', 'home.php', 'home'], ['User management', 'admin/users.php', 'users'],
-            ['Course management', null, 'book'], ['Enrollment management', null, 'file'],
+            ['Course management', 'admin/setup.php', 'book'], ['Enrollment management', null, 'file'],
             ['Timetable management', null, 'calendar'], ['Change approvals', 'admin/approvals.php', 'check'],
             ['Notification logs', null, 'bell'], ['Audit history', null, 'shield'],
             ['Reports & analytics', null, 'chart'], ['System settings', null, 'settings'],
