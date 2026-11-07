@@ -97,4 +97,81 @@ function localToUtc($date, $time) {
     $d->setTimezone(new DateTimeZone('UTC'));
     return $d->format('Y-m-d H:i:s');
 }
+
+
+// Where each lecture really is: its original slot, or the slot an APPROVED reschedule or time change
+// moved it to. Cancelled lectures are left out. Dates are Y-m-d and times are H:i.
+function effectiveSlots(PDO $db, $from, $to, $sectionId = null) {
+    $sql = "SELECT l.id AS lecture_id, l.section_id, l.original_date, l.original_start, l.original_end, l.original_room,
+                   c.code, c.name, u.full_name AS instructor, s.name AS section,
+                   cr.change_type, cr.proposed_date, cr.proposed_start, cr.proposed_end, cr.proposed_room
+            FROM lectures l
+            JOIN courses c ON c.id = l.course_id
+            JOIN sections s ON s.id = l.section_id
+            JOIN users u ON u.id = l.instructor_id
+            LEFT JOIN change_requests cr ON cr.id = (
+                SELECT x.id FROM change_requests x
+                WHERE x.lecture_id = l.id AND x.status = 'approved'
+                ORDER BY x.reviewed_at DESC, x.id DESC LIMIT 1)
+            WHERE l.status <> 'cancelled'
+              AND (l.original_date BETWEEN ? AND ? OR cr.proposed_date BETWEEN ? AND ?)";
+    $params = [$from, $to, $from, $to];
+    if ($sectionId !== null) {
+        $sql .= ' AND l.section_id = ?';
+        $params[] = (int)$sectionId;
+    }
+    $st = $db->prepare($sql);
+    $st->execute($params);
+    $out = [];
+    foreach ($st->fetchAll() as $r) {
+        $moved = in_array($r['change_type'], ['reschedule', 'time_change'], true);
+        $date  = $moved ? ($r['proposed_date'] ?: $r['original_date']) : $r['original_date'];
+        $start = $moved ? $r['proposed_start'] : $r['original_start'];
+        $end   = $moved ? $r['proposed_end'] : $r['original_end'];
+        if ($date < $from || $date > $to) {
+            continue;
+        }
+        $out[] = [
+            'lecture_id' => (int)$r['lecture_id'], 'section_id' => (int)$r['section_id'], 'section' => $r['section'],
+            'code' => $r['code'], 'name' => $r['name'], 'instructor' => $r['instructor'],
+            'date' => $date, 'start' => substr($start, 0, 5), 'end' => substr($end, 0, 5),
+            'room' => ($r['change_type'] === 'room_change' && $r['proposed_room']) ? $r['proposed_room'] : $r['original_room'],
+            'changed' => $r['change_type'] !== null && $r['change_type'] !== 'cancellation',
+        ];
+    }
+    return $out;
+}
+
+// Lectures of the same section that overlap the given slot (the lecture being changed is skipped).
+function slotConflicts(PDO $db, $sectionId, $date, $start, $end, $excludeLectureId = 0) {
+    $start = substr($start, 0, 5);
+    $end   = substr($end, 0, 5);
+    $out = [];
+    foreach (effectiveSlots($db, $date, $date, (int)$sectionId) as $s) {
+        if ($s['lecture_id'] === (int)$excludeLectureId) {
+            continue;
+        }
+        if ($start < $s['end'] && $end > $s['start']) {
+            $out[] = $s;
+        }
+    }
+    return $out;
+}
+
+function conflictLines(array $conflicts) {
+    $out = [];
+    foreach ($conflicts as $c) {
+        $out[] = $c['code'] . ' ' . $c['name'] . ' (' . fmtTime($c['start']) . ' to ' . fmtTime($c['end'])
+               . ', ' . fmtDate($c['date']) . ', ' . $c['instructor'] . ')';
+    }
+    return $out;
+}
+
+// The new time slot a reschedule or time-change request asks for, or null for other types.
+function proposedSlot(array $r) {
+    if (!in_array($r['change_type'], ['reschedule', 'time_change'], true)) {
+        return null;
+    }
+    return [$r['proposed_date'] ?: $r['original_date'], $r['proposed_start'], $r['proposed_end']];
+}
 ?>

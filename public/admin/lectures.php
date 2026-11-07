@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!in_array($mode, ['on_campus', 'online'], true)) $errors[] = 'Choose a mode.';
 
     $info = null;
+    $lateAdd = false;
     if (!$errors) {
         $q = $db->prepare(
             'SELECT c.instructor_id, c.semester_id AS course_sem, s.semester_id AS section_sem,
@@ -42,6 +43,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'That section belongs to a different semester than the course.';
         } elseif ($date < $info['start_date'] || $date > $info['end_date']) {
             $errors[] = 'The date is outside the semester (' . $info['start_date'] . ' to ' . $info['end_date'] . ').';
+        } else {
+            $startUtc = new DateTime(localToUtc($date, $start), new DateTimeZone('UTC'));
+            $nowUtc   = new DateTime('now', new DateTimeZone('UTC'));
+            if ($startUtc <= $nowUtc) {
+                $errors[] = 'That start time is in the past.';
+            } else {
+                $lateAdd = $startUtc < (clone $nowUtc)->modify('+24 hours');
+                if ($lateAdd && ($_POST['late_ok'] ?? '') !== '1') {
+                    $errors[] = 'This lecture starts in under 24 hours, so students get less than 24 hours notice. Tick the late addition box to confirm.';
+                }
+            }
+            foreach (slotConflicts($db, $sectionId, $date, $start, $end) as $c) {
+                $errors[] = 'This section already has ' . $c['code'] . ' from ' . fmtTime($c['start']) . ' to ' . fmtTime($c['end']) . ' on ' . fmtDate($c['date']) . '.';
+            }
         }
     }
 
@@ -60,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $lectureId = (int)$db->lastInsertId();
             $db->prepare(
                 "INSERT INTO change_history (lecture_id, action, performed_by, details) VALUES (?, 'created', ?, ?)"
-            )->execute([$lectureId, (int)$_SESSION['user_id'], 'Lecture added to the official timetable']);
+            )->execute([$lectureId, (int)$_SESSION['user_id'], $lateAdd ? 'Late addition to the timetable (under 24 hours notice)' : 'Lecture added to the official timetable']);
             $db->commit();
             setFlash('Lecture added to the timetable.');
             header('Location: ' . $_SERVER['SCRIPT_NAME']);
@@ -141,6 +156,9 @@ require __DIR__ . '/../includes/header.php';
         <select id="l_mode" name="mode"><option value="on_campus">On campus</option><option value="online">Online</option></select>
       </div>
     </div>
+        <label style="display:flex;gap:10px;align-items:center;font-weight:500">
+      <input type="checkbox" name="late_ok" value="1"> This is a late addition (starts in under 24 hours)
+    </label>
     <button type="submit" class="btn btn-sm">Add lecture</button>
   </form>
 </section>

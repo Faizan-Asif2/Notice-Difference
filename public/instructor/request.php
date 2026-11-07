@@ -34,8 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // The lecture must belong to THIS instructor and still be scheduled.
     $st = $db->prepare(
-        "SELECT id, original_date, original_room, original_mode, original_start_at
-         FROM lectures WHERE id = ? AND instructor_id = ? AND status = 'scheduled'"
+        "SELECT l.id, l.section_id, l.original_date, l.original_room, l.original_mode, l.original_start_at, c.code
+         FROM lectures l JOIN courses c ON c.id = l.course_id
+         WHERE l.id = ? AND l.instructor_id = ? AND l.status = 'scheduled'"
     );
     $st->execute([$lectureId, $uid]);
     $lec = $st->fetch();
@@ -112,7 +113,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Rule 3: a late request is allowed only with an emergency reason.
+    // Emergency rule: a late request can only be a cancellation. Students are never given a new time
+    // at short notice.
+    if ($lec && $isLate && isset($types[$type]) && $type !== 'cancellation') {
+        $errors[] = 'This request is under 24 hours notice. In an emergency the lecture can only be cancelled. '
+                  . 'Choose Cancellation, or send a request at least 24 hours before the lecture (and before the new time).';
+    }
+
+    // The section must be free at the proposed time.
+    if ($lec && $prop['start'] !== null) {
+        $cDate = $prop['date'] ?: $lec['original_date'];
+        $conf  = slotConflicts($db, (int)$lec['section_id'], $cDate, $prop['start'], $prop['end'], $lectureId);
+        if ($conf) {
+            $errors[] = 'The section already has a lecture at that time: ' . implode('; ', conflictLines($conf))
+                      . '. Choose a time when the section is free.';
+        }
+    }
+
+    // A late request needs an emergency explanation.
     if ($lec && $isLate && strlen($just) < 10) {
         $errors[] = 'This request is late (under 24 hours notice). Describe the emergency (at least 10 characters).';
     }
@@ -139,10 +157,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $lectureId, $reqId, $uid,
                 $types[$type] . ' requested. ' . ($isLate ? 'Late notice (under 24 hours).' : 'Notice given on time.'),
             ]);
+
+            // Tell every active administrator, inside the same transaction.
+            $admins = $db->query("SELECT id FROM users WHERE role = 'admin' AND is_active = 1")->fetchAll(PDO::FETCH_COLUMN);
+            $msg = $_SESSION['full_name'] . ' requested: ' . strtolower($types[$type]) . ' for ' . $lec['code']
+                 . ' on ' . fmtDate($lec['original_date']) . '. '
+                 . ($isLate ? 'LATE notice (emergency cancellation). Decide as soon as possible.'
+                            : 'Notice given on time.')
+                 . ' Approve before ' . toLocalTime($deadline->format('Y-m-d H:i:s'), 'D j M, g:i A')
+                 . ' so students get 24 hours notice.';
+            $ins = $db->prepare('INSERT INTO notifications (user_id, change_request_id, message) VALUES (?, ?, ?)');
+            foreach ($admins as $aid) {
+                $ins->execute([(int)$aid, $reqId, $msg]);
+            }
             $db->commit();
             setFlash($isLate
-                ? 'Request submitted and flagged as LATE notice. It is waiting for administrator approval.'
-                : 'Request submitted. It meets the 24-hour notice rule and is waiting for administrator approval.');
+                ? 'Emergency cancellation submitted and flagged as LATE notice. The administrator has been notified.'
+                : 'Request submitted. It meets the 24-hour notice rule. The administrator has been notified.');
             header('Location: ' . $_SERVER['SCRIPT_NAME']);
             exit;
         } catch (PDOException $ex) {
@@ -185,7 +216,7 @@ require __DIR__ . '/../includes/header.php';
 ?>
 <div class="page-head">
   <h1>Submit a change request</h1>
-  <p class="date">Requests should be sent at least 24 hours before the lecture. Students are told only after approval.</p>
+  <p class="date">Send requests at least 24 hours before the lecture. In an emergency (under 24 hours) the lecture can only be cancelled.</p>
 </div>
 
 <?php if ($flash): ?><div class="success mt" role="status"><?= e($flash) ?></div><?php endif; ?>
@@ -217,8 +248,12 @@ require __DIR__ . '/../includes/header.php';
     </select>
 
     <div id="late-box" class="error mt" style="display:none">
-      The 24-hour notice window has passed for the original lecture or for the new time you chose. You can still submit an
-      emergency request, but it will be flagged as late and you must explain the emergency below.
+      The 24-hour deadline for this lecture has passed. Under the policy only an emergency cancellation can be submitted now.
+      It will be flagged as late and you must explain the emergency below.
+    </div>
+    <div id="soon-box" class="error mt" style="display:none">
+      The new start time is less than 24 hours away. Students must get at least 24 hours notice of a new time,
+      so choose a later time, or cancel the lecture instead.
     </div>
 
     <label for="change_type">Type of change</label>
@@ -291,24 +326,34 @@ require __DIR__ . '/../includes/header.php';
   var type = document.getElementById('change_type');
   var lecture = document.getElementById('lecture_id');
   if (!type || !lecture) return;
+  // Only a convenience. The server calculates the real result and enforces every rule.
   function sync() {
+    var opt = lecture.options[lecture.selectedIndex];
+    var lateOrig = !!opt && opt.getAttribute('data-late') === '1';
+
+    // Original deadline passed: only a cancellation can be chosen.
+    Array.prototype.forEach.call(type.options, function (o) {
+      if (o.value && o.value !== 'cancellation') o.disabled = lateOrig;
+    });
+    if (lateOrig && type.value && type.value !== 'cancellation') type.value = 'cancellation';
+
     document.querySelectorAll('[data-types]').forEach(function (el) {
       el.style.display = el.getAttribute('data-types').split(' ').indexOf(type.value) > -1 ? '' : 'none';
     });
-    var opt = lecture.options[lecture.selectedIndex];
-    var late = opt && opt.getAttribute('data-late') === '1';
-    // A new start under 24 hours away also counts as late. This is only a convenience:
-    // the server calculates the real value and enforces the explanation.
-    if (!late && opt && (type.value === 'reschedule' || type.value === 'time_change')) {
+
+    // New start less than 24 hours away.
+    var soon = false;
+    if (!lateOrig && opt && (type.value === 'reschedule' || type.value === 'time_change')) {
       var d = type.value === 'reschedule' ? document.getElementById('proposed_date').value : opt.getAttribute('data-date');
       var t = document.getElementById('proposed_start').value;
       if (d && t) {
         var nt = new Date(d + 'T' + t);
-        if (!isNaN(nt) && nt.getTime() - Date.now() < 24 * 3600 * 1000) late = true;
+        if (!isNaN(nt) && nt.getTime() - Date.now() < 24 * 3600 * 1000) soon = true;
       }
     }
-    document.getElementById('late-box').style.display = late ? '' : 'none';
-    document.getElementById('late-field').style.display = late ? '' : 'none';
+    document.getElementById('late-box').style.display = lateOrig ? '' : 'none';
+    document.getElementById('late-field').style.display = lateOrig ? '' : 'none';
+    document.getElementById('soon-box').style.display = soon ? '' : 'none';
   }
   type.addEventListener('change', sync);
   lecture.addEventListener('change', sync);
