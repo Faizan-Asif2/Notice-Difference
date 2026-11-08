@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pending = $db->query(
     "SELECT cr.id, cr.change_type, cr.proposed_date, cr.proposed_start, cr.proposed_end, cr.proposed_room,
             cr.proposed_mode, cr.reason, cr.submitted_at, cr.deadline_at, cr.is_late, cr.late_justification,
-            l.id AS lecture_id, l.section_id, l.original_date, l.original_start, l.original_end,
+            l.id AS lecture_id, l.course_id, l.section_id, l.original_date, l.original_start, l.original_end,
             l.original_room, l.original_mode, l.original_start_at,
             c.code, c.name, s.name AS section, u.full_name AS instructor,
             (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = l.course_id AND e.section_id = l.section_id) AS students
@@ -233,6 +233,7 @@ require __DIR__ . '/../includes/header.php';
     $started   = new DateTime($p['original_start_at'], $utc) <= $nowUtc;
     $slot      = proposedSlot($p);
     $conf      = $slot ? slotConflicts($db, (int)$p['section_id'], $slot[0], $slot[1], $slot[2], (int)$p['lecture_id']) : [];
+    $bus       = busImpact($db, (int)$p['course_id'], (int)$p['section_id'], $slot ? $slot[1] : null, $slot ? $slot[2] : null);
 
     $blocked = '';
     if ($started) {
@@ -288,6 +289,34 @@ require __DIR__ . '/../includes/header.php';
           <div class="success">Section check: section <?= e($p['section']) ?> is free at the proposed time.</div>
         <?php endif; ?>
         <p class="meta"><a href="<?= BASE_URL ?>/admin/sections.php?section=<?= (int)$p['section_id'] ?>&amp;d=<?= e($viewDate) ?>">View this section's schedule for that week</a></p>
+      <?php endif; ?>
+
+      <?php $affected = array_values(array_unique(array_merge($bus['early'], $bus['late']))); ?>
+      <?php if ($bus['total'] === 0): ?>
+        <p class="hint">Transport check: no students are enrolled in this section.</p>
+      <?php else: ?>
+        <div class="<?= $affected ? 'error' : 'success' ?>">
+          Transport check: <?= (int)$bus['bus'] ?> of <?= (int)$bus['total'] ?> enrolled student(s) use the university bus
+          (<?= (int)$bus['with_times'] ?> entered bus times).
+          <?php if ($slot): ?>
+            <?php if ($affected): ?>
+              <strong><?= count($affected) ?> could be affected:</strong>
+              <?= count($bus['early']) ?> would start before their morning bus and <?= count($bus['late']) ?> would finish after their return bus.
+              <details>
+                <summary>Show names</summary>
+                <ul>
+                  <?php foreach ($bus['early'] as $n): ?><li><?= e($n) ?>: lecture starts before the morning bus</li><?php endforeach; ?>
+                  <?php foreach ($bus['late'] as $n): ?><li><?= e($n) ?>: lecture ends after the return bus</li><?php endforeach; ?>
+                </ul>
+              </details>
+            <?php elseif ($bus['with_times'] > 0): ?>
+              No clash with the bus times they entered.
+            <?php else: ?>
+              No bus times entered, so a clash cannot be checked.
+            <?php endif; ?>
+          <?php endif; ?>
+        </div>
+        <p class="hint">Advisory only. Students enter their own bus times, and NoticeDiff does not control or coordinate the buses.</p>
       <?php endif; ?>
 
       <div class="review">

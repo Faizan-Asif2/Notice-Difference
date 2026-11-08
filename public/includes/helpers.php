@@ -174,4 +174,40 @@ function proposedSlot(array $r) {
     }
     return [$r['proposed_date'] ?: $r['original_date'], $r['proposed_start'], $r['proposed_end']];
 }
+
+
+// Bus impact for the students enrolled in one course section. Pass the proposed start and end (H:i)
+// to see who would clash with their morning or return bus. Bus times are entered by the students.
+function busImpact(PDO $db, $courseId, $sectionId, $start = null, $end = null) {
+    $st = $db->prepare(
+        'SELECT u.full_name, t.transport_type, t.bus_departure, t.bus_return
+         FROM enrollments e
+         JOIN users u ON u.id = e.student_id
+         LEFT JOIN transport_settings t ON t.user_id = u.id
+         WHERE e.course_id = ? AND e.section_id = ?
+         ORDER BY u.full_name'
+    );
+    $st->execute([(int)$courseId, (int)$sectionId]);
+    $out = ['total' => 0, 'bus' => 0, 'with_times' => 0, 'early' => [], 'late' => []];
+    foreach ($st->fetchAll() as $r) {
+        $out['total']++;
+        if ($r['transport_type'] !== 'university_bus') {
+            continue;
+        }
+        $out['bus']++;
+        $dep = $r['bus_departure'] ? substr($r['bus_departure'], 0, 5) : null;
+        $ret = $r['bus_return'] ? substr($r['bus_return'], 0, 5) : null;
+        if ($dep === null && $ret === null) {
+            continue;
+        }
+        $out['with_times']++;
+        if ($start !== null && $dep !== null && substr($start, 0, 5) < $dep) {
+            $out['early'][] = $r['full_name'];     // lecture starts before the morning bus
+        }
+        if ($end !== null && $ret !== null && substr($end, 0, 5) > $ret) {
+            $out['late'][] = $r['full_name'];      // lecture ends after the return bus
+        }
+    }
+    return $out;
+}
 ?>
