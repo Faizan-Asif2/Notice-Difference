@@ -38,11 +38,12 @@ Public signup always creates a student. Instructor and administrator roles are a
 - Admin can create accounts with any role, change roles and disable or enable accounts
 - Student commute preferences with schedule-impact warnings (a comparison of times the student enters, not a bus system)
 - Instructor "My courses" page with students per section, upcoming lectures and pending requests
+- Administrator transport check per request: how many enrolled students use the university bus and who would clash with a new time (advisory)
 
 ## Not implemented yet
 
-Email notifications, password reset, a settings and profile page, a help page, a lecture details page,
-reports and analytics charts, notification-log pages for administrators, conflict detection between lectures,
+Email notifications, a settings and profile page, a help page, a lecture details page,
+reports and analytics charts, notification-log pages for administrators, 
 calendar export, and the "additional lecture" change type in the request form.
 Disabling an account takes effect at the user's next login.
 
